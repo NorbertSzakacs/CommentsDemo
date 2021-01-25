@@ -8,6 +8,6 @@ namespace CommentsDemo
         public int Limit { get; set; } = 5;
 
         [FromQuery(Name = "offset")]
-        public int Offset { get; set; }
+        public int Offset { get; set; } = 0;
     }
 }
