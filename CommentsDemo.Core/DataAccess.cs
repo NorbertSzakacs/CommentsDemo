@@ -15,26 +15,13 @@ namespace CommentsDemo.Core
 
         public void FillWithDemoData(long productNumber, long commentsPerProductNumber)
         {
-            for (int i = 0; i < productNumber; i++)
+            for (int productLoop = 0; productLoop < productNumber; productLoop++)
             {
-                LinkedList<CommentDTO> comments = new LinkedList<CommentDTO>();
+                string productName = $"BestProductNamedAs{productLoop}";                
                 for (int commentLoop = 0; commentLoop < commentsPerProductNumber; commentLoop++)
                 {
-                    // Lists that contain reference types perform better when a node and its value are created at the same time
-                    comments.AddFirst(
-                        new CommentDTO
-                        {
-                            Content = masterCommentSample,
-                            CreatedAt = DateTime.Now.ToUniversalTime()
-                        });
-                }
-
-                demoData.Add($"BestProductNamedAs{i}",
-                    new ProductDTO
-                    {
-                        ProductName = $"BestProductNamedAs{i}",
-                        Comments = comments
-                    });
+                    AddComment(productName, masterCommentSample);
+                }              
             }
         }
 
