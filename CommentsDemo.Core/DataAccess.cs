@@ -31,6 +31,21 @@ namespace CommentsDemo.Core
         }
 
         /// <summary>
+        /// Returns with every information about the requested product.
+        /// </summary>
+        /// <param name="productName">Identifier of the product</param>
+        /// <returns><see cref="ProductDTO"/> if the requested product was found, otherwise <see cref="null"/>.</returns>
+        public ProductDTO GetProduct(string productNameIn)
+        {
+            if (demoData.TryGetValue(productNameIn, out ProductDTO product))
+            {    
+                return product;
+            }
+
+            return null;
+        }
+
+        /// <summary>
         /// Adds a new comment to the given product.
         /// New product will be created in case of a new product identifier.
         /// </summary>

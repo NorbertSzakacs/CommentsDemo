@@ -41,6 +41,22 @@ namespace CommentsDemo.Controllers
             return Ok(result);
         }
 
+        // GET Product/<value>
+        [HttpGet("{productName}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public ActionResult<ProductDTO> GetProduct(string productName)
+        {
+            ProductDTO result = this.dataAccess.GetProduct(productName);
+
+            if (result == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(result);
+        }
+
         // GET Product/Fragments?limit=<value>&offset=<value>
         [HttpGet]
         [Route("Fragments")]
@@ -52,11 +68,14 @@ namespace CommentsDemo.Controllers
             return Ok(result.OrderBy(p => p.ProductName).Skip(request.Offset).Take(request.Limit));
         }
 
-        // GET Product/<value>
-        [HttpGet("{id}")]
-        public string Get(int id)
+        //TODO: legfrissebb vélemény ellenőrzése timestamppel
+        [HttpPost]
+        [ProducesResponseType(StatusCodes.Status201Created)]
+        public ActionResult<string> PostComment([FromBody] InsertCommentDTO insertCommentDTO)
         {
-            return $"value{id}";
+            this.dataAccess.AddComment(insertCommentDTO.ProductName, insertCommentDTO.CommentContent);
+
+            return new CreatedResult($"/product/{insertCommentDTO.ProductName}", insertCommentDTO.ProductName);
         }
 
         private readonly DataAccess dataAccess;
