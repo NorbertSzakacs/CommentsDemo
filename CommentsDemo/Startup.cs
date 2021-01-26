@@ -57,7 +57,7 @@ namespace CommentsDemo
             app.UseSwagger();
             app.UseSwaggerUI(opt => opt.SwaggerEndpoint($"/swagger/{version}/swagger.json", $"ProductComments {version}"));
 
-            app.UseHttpsRedirection();
+           // app.UseHttpsRedirection();
 
             app.UseRouting();
 
