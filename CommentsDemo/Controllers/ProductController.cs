@@ -18,14 +18,7 @@ namespace CommentsDemo.Controllers
         public ProductController(DataAccess dataAccessIn, ILogger<ProductController> loggerIn)
         {
             this.logger = loggerIn;
-            this.dataAccess = dataAccessIn;
-
-            if (dataAccess.GetProducts().Any())
-            {
-                return;
-            }
-
-            this.dataAccess.FillWithDemoData(5, 5);
+            this.dataAccess = dataAccessIn;           
         }
 
         // GET /Product

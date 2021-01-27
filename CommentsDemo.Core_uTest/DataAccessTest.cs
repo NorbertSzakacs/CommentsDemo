@@ -17,6 +17,8 @@ namespace CommentsDemo.Core_uTest
         }
 
         [Test]
+        [Explicit]
+        // TODO: update with IAzureTableAccess moq
         public void GetProduct_ExisingProduct_ProductReturned()
         {
             // Arrange
@@ -34,6 +36,8 @@ namespace CommentsDemo.Core_uTest
         }
 
         [Test]
+        [Explicit]
+        // TODO: update with IAzureTableAccess moq
         public void GetProduct_MissingProduct_NullReturned()
         {
             // Arrange
@@ -49,6 +53,8 @@ namespace CommentsDemo.Core_uTest
         }
 
         [Test]
+        [Explicit]
+        // TODO: update with IAzureTableAccess moq
         public void AddComment_NewProduct_ProductCreatedWithComment()
         {
             // Arrange
@@ -72,6 +78,8 @@ namespace CommentsDemo.Core_uTest
         }
 
         [Test]
+        [Explicit]
+        // TODO: Azure Table behavior, not verifiable at unit level.
         public void AddComment_ExisingProduct_CommentAddedInFirstPlace()
         {
             // Arrange

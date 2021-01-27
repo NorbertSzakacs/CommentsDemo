@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 using CommentsDemo.Common;
+using CommentsDemo.Core.AzureModel;
 
 namespace CommentsDemo.Core
 {
@@ -10,19 +12,25 @@ namespace CommentsDemo.Core
     {
         public DataAccess()
         {
+            this.azureAccess = new AzureTableAccess();
             this.demoData = new Dictionary<string, ProductDTO>();
         }
 
-        public void FillWithDemoData(long productNumber, long commentsPerProductNumber)
+        public List<string> FillWithDemoData(long productNumber, long commentsPerProductNumber)
         {
+            List<string> productNames = new List<string>();
+
             for (int productLoop = 0; productLoop < productNumber; productLoop++)
             {
-                string productName = $"BestProductNamedAs{productLoop}";                
+                string productName = $"BestProductNamedAs{random.Next(100)}";
+                productNames.Add(productName);
                 for (int commentLoop = 0; commentLoop < commentsPerProductNumber; commentLoop++)
                 {
-                    AddComment(productName, masterCommentSample);
+                    AddComment(productName, GenerateSampleComment());
                 }              
             }
+
+            return productNames;
         }
 
         public IEnumerable<ProductDTO> GetProducts()
@@ -37,12 +45,20 @@ namespace CommentsDemo.Core
         /// <returns><see cref="ProductDTO"/> if the requested product was found, otherwise <see cref="null"/>.</returns>
         public ProductDTO GetProduct(string productNameIn)
         {
-            if (demoData.TryGetValue(productNameIn, out ProductDTO product))
-            {    
-                return product;
+            List<CommentEntity> retrievedComments = this.azureAccess.RetrieveCommentsSimple(tableName, productNameIn);
+            if (!retrievedComments.Any())
+            {
+                return null;
             }
 
-            return null;
+            LinkedList<CommentDTO> commentsInProduct = new LinkedList<CommentDTO>();
+
+            foreach (CommentEntity comment in retrievedComments)
+            {
+                commentsInProduct.AddFirst(CreateCommentDTO(comment.Comment,comment.RowKey));
+            }
+
+            return new ProductDTO() { ProductName = productNameIn, Comments = commentsInProduct };
         }
 
         /// <summary>
@@ -54,22 +70,24 @@ namespace CommentsDemo.Core
         /// <returns>True if it is a new product otherwise false.</returns>
         public bool AddComment(string productNameIn, string comment)
         {
-            if (demoData.TryGetValue(productNameIn, out ProductDTO existingProduct))
-            {
-                existingProduct.Comments.AddFirst(CreateCommentDTO(comment));
+            //if (demoData.TryGetValue(productNameIn, out ProductDTO existingProduct))
+            //{
+            //    existingProduct.Comments.AddFirst(CreateCommentDTO(comment));
 
-                return false;
-            }
+            //    return false;
+            //}
 
-            LinkedList<CommentDTO> comments = new LinkedList<CommentDTO>();
-            comments.AddFirst(CreateCommentDTO(comment));
+            //LinkedList<CommentDTO> comments = new LinkedList<CommentDTO>();
+            //comments.AddFirst(CreateCommentDTO(comment));
 
-            demoData.Add(productNameIn,
-                new ProductDTO()
-                {
-                    ProductName = productNameIn,
-                    Comments = comments
-                });
+            //demoData.Add(productNameIn,
+            //    new ProductDTO()
+            //    {
+            //        ProductName = productNameIn,
+            //        Comments = comments
+            //    });
+
+           CommentEntity result = this.azureAccess.InsertCommentAsync(tableName, productNameIn, comment).Result;
 
             return true;
         }
@@ -79,14 +97,20 @@ namespace CommentsDemo.Core
             return new CommentDTO { Content = comment, CreatedAt = DateTime.Now.ToUniversalTime() };
         }
 
-        //private const int commentMaximumLength = 500;
-        //private static readonly Random random = new Random();
-        //private static string RandomString()
-        //{
-        //    const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_!?:)( @&=";
-        //    return new string(Enumerable.Repeat(chars, commentMaximumLength)
-        //      .Select(s => s[random.Next(s.Length)]).ToArray());
-        //}
+        private static CommentDTO CreateCommentDTO(string comment, string createdAt)
+        {
+            return new CommentDTO { Content = comment, CreatedAt = DateTimeUtil.GetOriginalDateTime(createdAt) };
+        }
+
+
+        private const int commentMaximumLength = 500;
+        private static readonly Random random = new Random();
+        private static string GenerateSampleComment()
+        {
+            const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_!?:)( @&=";
+            return new string(Enumerable.Repeat(chars, random.Next(1, commentMaximumLength))
+              .Select(s => s[random.Next(s.Length)]).ToArray());
+        }
 
         private static string masterCommentSample =
             $"=86UH2 KBKTI@WE0 2M3UIUFNN13N)UBQI_CKXGO6!PUR7BHUA5@@5Z_N1H:BM G9S!86CQSV&@3:" +
@@ -97,6 +121,8 @@ namespace CommentsDemo.Core
             $"R(IV@=3PH?&33B3U6&I 650NN5)8PB!SECU2WY&XMBG2M7LG28ICO:S6P)HLF)=GBZY01A@I=434Z" +
             $"&B0U8G1:8DL48M1Q7RRCA16I4Z1_=C3J7HR:1!";
 
+        private readonly IAzureTableAccess azureAccess;
+        private const string tableName = "commentDemoTable0";
         private Dictionary<string, ProductDTO> demoData = new Dictionary<string, ProductDTO>();
     }
 }
