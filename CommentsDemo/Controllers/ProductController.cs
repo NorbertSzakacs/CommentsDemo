@@ -58,7 +58,6 @@ namespace CommentsDemo.Controllers
             return Ok(result.Comments.Skip(request.Offset).Take(request.Limit));
         }
 
-        //TODO: legfrissebb vélemény ellenőrzése timestamppel
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status201Created)]
         public ActionResult<string> PostComment([FromBody] InsertCommentDTO insertCommentDTO)
@@ -66,6 +65,26 @@ namespace CommentsDemo.Controllers
             this.dataAccess.AddComment(insertCommentDTO.ProductName, insertCommentDTO.CommentContent);
 
             return new CreatedResult($"/product/{insertCommentDTO.ProductName}", insertCommentDTO.ProductName);
+        }
+
+        [HttpPost]
+        [Route("NewComment")]
+        [ProducesResponseType(StatusCodes.Status201Created)]        
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public ActionResult<string> PostNewestComment([FromBody] InsertCommentDTO insertCommentDTO)
+        {
+            InsertResultEnum resultEnum = this.dataAccess.AddCommentIfPermitted(insertCommentDTO);
+
+            switch (resultEnum)
+            {
+                case InsertResultEnum.Success:
+                    return new CreatedResult($"/product/{insertCommentDTO.ProductName}", insertCommentDTO.ProductName);                    
+                case InsertResultEnum.NotPermitted:
+                    return ValidationProblem("The latest comment id is not valid!");
+                default:
+                    return StatusCode(StatusCodes.Status500InternalServerError);
+            }
         }
 
         private readonly DataAccess dataAccess;

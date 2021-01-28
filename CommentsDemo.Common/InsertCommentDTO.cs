@@ -9,5 +9,7 @@ namespace CommentsDemo.Common
         public string ProductName { get; set; }
 
         public string CommentContent { get; set; }
+
+        public string LatestComment { get; set; }
     }
 }

@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Text;
 using System.Threading.Tasks;
 
 using CommentsDemo.Common;
@@ -39,7 +38,7 @@ namespace CommentsDemo.Core
             return table;
         }
 
-        // TODO Insert with TableBatchOperation in order to generate a lot more data
+        // TODO Insert with TableBatchOperation (max 100) in order to generate a lot more data
         public async Task<CommentEntity> InsertCommentAsync(string tableName, string productName, string comment)
         {
             try
@@ -48,7 +47,7 @@ namespace CommentsDemo.Core
                 CloudTable table = tableClient.GetTableReference(tableName);
 
                 TableOperation insertOperation = TableOperation.Insert(new CommentEntity(productName, comment));
-                TableResult result = await table.ExecuteAsync(insertOperation);
+                TableResult result = await table.ExecuteAsync(insertOperation).ConfigureAwait(false);
                 CommentEntity insertedComment = result.Result as CommentEntity;
 
                 double? charge = result.RequestCharge.HasValue ? result.RequestCharge : 0;
@@ -77,7 +76,7 @@ namespace CommentsDemo.Core
 
                 do
                 {
-                    TableQuerySegment<CommentEntity> segment = await table.ExecuteQuerySegmentedAsync(query, continuationToken);
+                    TableQuerySegment<CommentEntity> segment = await table.ExecuteQuerySegmentedAsync(query, continuationToken).ConfigureAwait(false);
 
                     result.AddRange(segment.Results);
 
@@ -108,7 +107,7 @@ namespace CommentsDemo.Core
 
                 do
                 {
-                    TableQuerySegment<DynamicTableEntity> segment = await table.ExecuteQuerySegmentedAsync(tableQuery, continuationToken);
+                    TableQuerySegment<DynamicTableEntity> segment = await table.ExecuteQuerySegmentedAsync(tableQuery, continuationToken).ConfigureAwait(false);
 
                     output.AddRange(segment.Results.Select(dynRes => dynRes.PartitionKey).Distinct());
 
@@ -118,7 +117,29 @@ namespace CommentsDemo.Core
 
                 return output.Distinct();
             }
+            catch (StorageException e)
+            {
+                throw new CommentsDemoException($"Exception occured during {MethodBase.GetCurrentMethod().Name} call.", e);
+            }
+        }
 
+        public async Task<string> RetrieveLatestCommentAsync(string tableName, string productName)
+        {
+            try
+            {
+                string result;
+                CloudTableClient tableClient = CreateTableClient(this.connectionString);
+                CloudTable table = tableClient.GetTableReference(tableName);
+
+                string wherePart = TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, productName);
+                TableQuery tableQuery = new TableQuery { TakeCount = 1 }.Where(wherePart).Select(new List<string> { "RowKey" });
+
+                TableQuerySegment<DynamicTableEntity> segment = await table.ExecuteQuerySegmentedAsync(tableQuery, null);
+
+                result = segment.Results.Select(p => p.RowKey).First();
+
+                return result;
+            }
             catch (StorageException e)
             {
                 throw new CommentsDemoException($"Exception occured during {MethodBase.GetCurrentMethod().Name} call.", e);

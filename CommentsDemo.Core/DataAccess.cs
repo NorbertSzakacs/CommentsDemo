@@ -59,15 +59,48 @@ namespace CommentsDemo.Core
             return new ProductDTO() { ProductName = productNameIn, Comments = commentsInProduct };
         }
 
+        public string GetLatestComment(string productNameIn)
+        {
+            string result = this.azureAccess.RetrieveLatestCommentAsync(tableName, productNameIn).Result;
+
+            return result;
+        }
+
         /// <summary>
         /// Adds a new comment to the given product.
         /// New product will be created in case of a new product identifier.
         /// </summary>
         /// <param name="productNameIn">Identifier of the product</param>
         /// <param name="comment">New comment</param>
-        public void AddComment(string productNameIn, string comment)
+        public CommentEntity AddComment(string productNameIn, string comment)
         {
             CommentEntity result = this.azureAccess.InsertCommentAsync(tableName, productNameIn, comment).Result;
+            return result;
+        }
+
+        /// <summary>
+        /// Adds a new comment to the given product if the provided latest comment Id is the same as in the Azure Table.
+        /// </summary>
+        public InsertResultEnum AddCommentIfPermitted(InsertCommentDTO insertDTO)
+        {
+            string latestStoredComment = GetLatestComment(insertDTO.ProductName);
+
+            if (latestStoredComment.Equals(insertDTO.LatestComment))
+            {
+                try
+                {
+                    AddComment(insertDTO.ProductName, insertDTO.CommentContent);
+                }
+                catch (CommentsDemoException)
+                {
+                    return InsertResultEnum.Failure;
+                    
+                }
+
+                return InsertResultEnum.Success;
+            }
+
+            return InsertResultEnum.NotPermitted;
         }
 
         private static CommentDTO CreateCommentDTO(string comment, string createdAt)

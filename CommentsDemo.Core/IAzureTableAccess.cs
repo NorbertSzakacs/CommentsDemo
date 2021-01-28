@@ -16,6 +16,8 @@ namespace CommentsDemo.Core
         // Partition scan
         Task<IEnumerable<CommentEntity>> RetrieveCommentsAsync(string tableName, string productName);
 
+        Task<string> RetrieveLatestCommentAsync(string tableName, string productName);
+
         // Table scan
         Task<IEnumerable<string>> RetrieveProductListAsync(string tableName);
     }
