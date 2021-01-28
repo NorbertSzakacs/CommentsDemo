@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using System.Linq;
 
 using CommentsDemo.Common;
@@ -62,47 +61,17 @@ namespace CommentsDemo.Core_uTest
             string comment = "SampleComment";
 
             // Act
-            bool result = this.sut.AddComment(productName, comment);
+            this.sut.AddComment(productName, comment);
 
             // Assert
-            Assert.That(result, Is.EqualTo(true));
+            ProductDTO found = this.sut.GetProduct(productName);
 
-            List<ProductDTO> productContent = this.sut.GetProducts().ToList();
-
-            ProductDTO found = productContent.FirstOrDefault(p => p.ProductName.Equals(productName));
             Assert.That(found, Is.Not.Null);
 
             bool commentFound = found.Comments.Any(p => p.Content.Equals(comment));
             Assert.That(commentFound, Is.True);
             Assert.That(found.Comments.Count, Is.EqualTo(1));
-        }
-
-        [Test]
-        [Explicit]
-        // TODO: Azure Table behavior, not verifiable at unit level.
-        public void AddComment_ExisingProduct_CommentAddedInFirstPlace()
-        {
-            // Arrange
-            string productName = "SampleProductName";
-            string comment = "SampleComment";
-            string newlyAddedComment = "AnotherComment";
-            this.sut.AddComment(productName, comment);
-
-            // Act
-            bool result = this.sut.AddComment(productName, newlyAddedComment);
-
-            // Assert
-            Assert.That(result, Is.EqualTo(false));
-
-            List<ProductDTO> productContent = this.sut.GetProducts().ToList();
-
-            ProductDTO foundProduct = productContent.FirstOrDefault(p => p.ProductName.Equals(productName));
-            Assert.That(foundProduct, Is.Not.Null);
-                        
-            Assert.That(foundProduct.Comments.Count, Is.EqualTo(2));
-            Assert.That(foundProduct.Comments.ElementAt(0).Content, Is.EqualTo(newlyAddedComment));
-            Assert.That(foundProduct.Comments.ElementAt(1).Content, Is.EqualTo(comment));
-        }
+        }     
 
         private DataAccess sut;
     }

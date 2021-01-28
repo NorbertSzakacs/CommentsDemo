@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
 
 using CommentsDemo.Common;
 using CommentsDemo.Core.AzureModel;
@@ -13,7 +12,6 @@ namespace CommentsDemo.Core
         public DataAccess()
         {
             this.azureAccess = new AzureTableAccess();
-            this.demoData = new Dictionary<string, ProductDTO>();
         }
 
         public List<string> FillWithDemoData(long productNumber, long commentsPerProductNumber)
@@ -27,15 +25,10 @@ namespace CommentsDemo.Core
                 for (int commentLoop = 0; commentLoop < commentsPerProductNumber; commentLoop++)
                 {
                     AddComment(productName, GenerateSampleComment());
-                }              
+                }
             }
 
             return productNames;
-        }
-
-        public IEnumerable<ProductDTO> GetProducts()
-        {
-            return demoData.Select(p => p.Value);
         }
 
         public IEnumerable<string> GetProductNames()
@@ -57,10 +50,10 @@ namespace CommentsDemo.Core
             }
 
             List<CommentDTO> commentsInProduct = new List<CommentDTO>();
-            
+
             foreach (CommentEntity comment in retrievedComments)
             {
-                commentsInProduct.Add(CreateCommentDTO(comment.Comment,comment.RowKey));
+                commentsInProduct.Add(CreateCommentDTO(comment.Comment, comment.RowKey));
             }
 
             return new ProductDTO() { ProductName = productNameIn, Comments = commentsInProduct };
@@ -72,34 +65,9 @@ namespace CommentsDemo.Core
         /// </summary>
         /// <param name="productNameIn">Identifier of the product</param>
         /// <param name="comment">New comment</param>
-        /// <returns>True if it is a new product otherwise false.</returns>
-        public bool AddComment(string productNameIn, string comment)
+        public void AddComment(string productNameIn, string comment)
         {
-            //if (demoData.TryGetValue(productNameIn, out ProductDTO existingProduct))
-            //{
-            //    existingProduct.Comments.AddFirst(CreateCommentDTO(comment));
-
-            //    return false;
-            //}
-
-            //LinkedList<CommentDTO> comments = new LinkedList<CommentDTO>();
-            //comments.AddFirst(CreateCommentDTO(comment));
-
-            //demoData.Add(productNameIn,
-            //    new ProductDTO()
-            //    {
-            //        ProductName = productNameIn,
-            //        Comments = comments
-            //    });
-
-           CommentEntity result = this.azureAccess.InsertCommentAsync(tableName, productNameIn, comment).Result;
-
-            return true;
-        }
-
-        private static CommentDTO CreateCommentDTO(string comment)
-        {
-            return new CommentDTO { Content = comment, CreatedAt = DateTime.Now.ToUniversalTime() };
+            CommentEntity result = this.azureAccess.InsertCommentAsync(tableName, productNameIn, comment).Result;
         }
 
         private static CommentDTO CreateCommentDTO(string comment, string createdAt)
@@ -107,9 +75,9 @@ namespace CommentsDemo.Core
             return new CommentDTO { Content = comment, CreatedAt = DateTimeUtil.GetOriginalDateTime(createdAt) };
         }
 
-
         private const int commentMaximumLength = 500;
         private static readonly Random random = new Random();
+
         private static string GenerateSampleComment()
         {
             const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_!?:)( @&=";
@@ -128,6 +96,5 @@ namespace CommentsDemo.Core
 
         private readonly IAzureTableAccess azureAccess;
         private const string tableName = "commentDemoTable0";
-        private Dictionary<string, ProductDTO> demoData = new Dictionary<string, ProductDTO>();
     }
 }

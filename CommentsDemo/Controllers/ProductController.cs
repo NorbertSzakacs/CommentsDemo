@@ -21,19 +21,6 @@ namespace CommentsDemo.Controllers
             this.dataAccess = dataAccessIn;
         }
 
-        // GET /Product
-        [HttpGet]
-        [Route("")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        public ActionResult<IEnumerable<ProductDTO>> Get()
-        {
-            ProductDTO[] result = this.dataAccess.GetProducts().ToArray();
-
-            logger.LogInformation("Product list scan performed.");
-
-            return Ok(result);
-        }
-
         [HttpGet]
         [Route("ProductNames")]
         [ProducesResponseType(StatusCodes.Status200OK)]
@@ -58,18 +45,7 @@ namespace CommentsDemo.Controllers
             }
 
             return Ok(result);
-        }
-
-        // GET Product/Fragments?limit=<value>&offset=<value>
-        [HttpGet]
-        [Route("Fragments")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        public ActionResult<IEnumerable<ProductDTO>> GetProductFragments([FromQuery] ProductRequest request)
-        {
-            IEnumerable<ProductDTO> result = this.dataAccess.GetProducts();
-
-            return Ok(result.OrderBy(p => p.ProductName).Skip(request.Offset).Take(request.Limit));
-        }
+        }      
 
         //GET Product/Comments?productname=<value>&limit=<value>&offset=<value>"
         [HttpGet]
