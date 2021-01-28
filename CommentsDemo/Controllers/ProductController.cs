@@ -18,7 +18,7 @@ namespace CommentsDemo.Controllers
         public ProductController(DataAccess dataAccessIn, ILogger<ProductController> loggerIn)
         {
             this.logger = loggerIn;
-            this.dataAccess = dataAccessIn;           
+            this.dataAccess = dataAccessIn;
         }
 
         // GET /Product
@@ -26,10 +26,20 @@ namespace CommentsDemo.Controllers
         [Route("")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         public ActionResult<IEnumerable<ProductDTO>> Get()
-        {          
+        {
             ProductDTO[] result = this.dataAccess.GetProducts().ToArray();
 
             logger.LogInformation("Product list scan performed.");
+
+            return Ok(result);
+        }
+
+        [HttpGet]
+        [Route("ProductNames")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public ActionResult<IEnumerable<string>> GetProductNames()
+        {
+            IEnumerable<string> result = this.dataAccess.GetProductNames();
 
             return Ok(result);
         }
@@ -59,6 +69,17 @@ namespace CommentsDemo.Controllers
             IEnumerable<ProductDTO> result = this.dataAccess.GetProducts();
 
             return Ok(result.OrderBy(p => p.ProductName).Skip(request.Offset).Take(request.Limit));
+        }
+
+        //GET Product/Comments?productname=<value>&limit=<value>&offset=<value>"
+        [HttpGet]
+        [Route("Comments")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public ActionResult<IEnumerable<ProductDTO>> GetCommentFragments([FromQuery] CommentRequest request)
+        {
+            ProductDTO result = this.dataAccess.GetProduct(request.ProductName);
+
+            return Ok(result.Comments.Skip(request.Offset).Take(request.Limit));
         }
 
         //TODO: legfrissebb vélemény ellenőrzése timestamppel

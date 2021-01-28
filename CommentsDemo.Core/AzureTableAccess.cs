@@ -39,6 +39,7 @@ namespace CommentsDemo.Core
             return table;
         }
 
+        // TODO Insert with TableBatchOperation in order to generate a lot more data
         public async Task<CommentEntity> InsertCommentAsync(string tableName, string productName, string comment)
         {
             try
@@ -51,34 +52,76 @@ namespace CommentsDemo.Core
                 CommentEntity insertedComment = result.Result as CommentEntity;
 
                 double? charge = result.RequestCharge.HasValue ? result.RequestCharge : 0;
-                Console.WriteLine($"RC_log_{charge}_{MethodBase.GetCurrentMethod().DeclaringType}_{productName}");
+                Console.WriteLine($"RC_log_{charge}_{MethodBase.GetCurrentMethod().Name}_{productName}");
 
                 return insertedComment;
             }
             catch (StorageException e)
             {
-                throw new CommentsDemoException("Exception occured during comment insert call.", e);             
+                throw new CommentsDemoException("Exception occured during comment insert call.", e);
             }
         }
 
-        // TODO ExecuteQuerySegmentedAsync, Chunking, CancellationToken
-        public List<CommentEntity> RetrieveCommentsSimple(string tableName, string productName)
+        public async Task<IEnumerable<CommentEntity>> RetrieveCommentsAsync(string tableName, string productName)
         {
             try
             {
+                List<CommentEntity> result = new List<CommentEntity>();
+                TableContinuationToken continuationToken = null;
+
                 CloudTableClient tableClient = CreateTableClient(this.connectionString);
                 CloudTable table = tableClient.GetTableReference(tableName);
 
                 string wherePart = TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, productName);
-                TableQuery<CommentEntity> query = new TableQuery<CommentEntity>().Where(wherePart);                
+                TableQuery<CommentEntity> query = new TableQuery<CommentEntity> { TakeCount = 1000 }.Where(wherePart);
 
-                List<CommentEntity> result = table.ExecuteQuery(query).ToList();
+                do
+                {
+                    TableQuerySegment<CommentEntity> segment = await table.ExecuteQuerySegmentedAsync(query, continuationToken);
+
+                    result.AddRange(segment.Results);
+
+                    continuationToken = segment.ContinuationToken;
+                }
+                while (continuationToken != null);
+
 
                 return result;
             }
             catch (StorageException e)
             {
                 throw new CommentsDemoException("Exception occured during comment insert call.", e);
+            }
+        }
+
+        public async Task<IEnumerable<string>> RetrieveProductListAsync(string tableName)
+        {
+            try
+            {
+                List<string> output = new List<string>();
+                TableContinuationToken continuationToken = null;
+
+                CloudTableClient tableClient = CreateTableClient(this.connectionString);
+                CloudTable table = tableClient.GetTableReference(tableName);
+                // Maximum TakeCount is 1000
+                TableQuery tableQuery = new TableQuery { TakeCount = 1000 }.Select(new List<string> { "PartitionKey" });
+
+                do
+                {
+                    TableQuerySegment<DynamicTableEntity> segment = await table.ExecuteQuerySegmentedAsync(tableQuery, continuationToken);
+
+                    output.AddRange(segment.Results.Select(dynRes => dynRes.PartitionKey).Distinct());
+
+                    continuationToken = segment.ContinuationToken;
+                }
+                while (continuationToken != null);
+
+                return output.Distinct();
+            }
+
+            catch (StorageException e)
+            {
+                throw new CommentsDemoException($"Exception occured during {MethodBase.GetCurrentMethod().Name} call.", e);
             }
         }
 
@@ -118,7 +161,7 @@ namespace CommentsDemo.Core
             return tableClient;
         }
 
-        private readonly string connectionString;        
+        private readonly string connectionString;
         private static IConfigurationRoot configuration;
     }
 }

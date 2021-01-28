@@ -22,7 +22,7 @@ namespace CommentsDemo.Core
 
             for (int productLoop = 0; productLoop < productNumber; productLoop++)
             {
-                string productName = $"BestProductNamedAs{random.Next(100)}";
+                string productName = $"BestProductNamedAs{random.Next(10000)}";
                 productNames.Add(productName);
                 for (int commentLoop = 0; commentLoop < commentsPerProductNumber; commentLoop++)
                 {
@@ -38,6 +38,11 @@ namespace CommentsDemo.Core
             return demoData.Select(p => p.Value);
         }
 
+        public IEnumerable<string> GetProductNames()
+        {
+            return this.azureAccess.RetrieveProductListAsync(tableName).Result;
+        }
+
         /// <summary>
         /// Returns with every information about the requested product.
         /// </summary>
@@ -45,17 +50,17 @@ namespace CommentsDemo.Core
         /// <returns><see cref="ProductDTO"/> if the requested product was found, otherwise <see cref="null"/>.</returns>
         public ProductDTO GetProduct(string productNameIn)
         {
-            List<CommentEntity> retrievedComments = this.azureAccess.RetrieveCommentsSimple(tableName, productNameIn);
+            IEnumerable<CommentEntity> retrievedComments = this.azureAccess.RetrieveCommentsAsync(tableName, productNameIn).Result;
             if (!retrievedComments.Any())
             {
                 return null;
             }
 
-            LinkedList<CommentDTO> commentsInProduct = new LinkedList<CommentDTO>();
-
+            List<CommentDTO> commentsInProduct = new List<CommentDTO>();
+            
             foreach (CommentEntity comment in retrievedComments)
             {
-                commentsInProduct.AddFirst(CreateCommentDTO(comment.Comment,comment.RowKey));
+                commentsInProduct.Add(CreateCommentDTO(comment.Comment,comment.RowKey));
             }
 
             return new ProductDTO() { ProductName = productNameIn, Comments = commentsInProduct };

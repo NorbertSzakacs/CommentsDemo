@@ -14,6 +14,9 @@ namespace CommentsDemo.Core
         Task<CommentEntity> InsertCommentAsync(string tableName, string productName, string comment);
 
         // Partition scan
-        List<CommentEntity> RetrieveCommentsSimple(string tableName, string productName);
+        Task<IEnumerable<CommentEntity>> RetrieveCommentsAsync(string tableName, string productName);
+
+        // Table scan
+        Task<IEnumerable<string>> RetrieveProductListAsync(string tableName);
     }
 }
