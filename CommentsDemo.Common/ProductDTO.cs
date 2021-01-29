@@ -7,5 +7,9 @@ namespace CommentsDemo.Common
         public string ProductName { get; set; }
 
         public List<CommentDTO> Comments { get; set; }
+
+        public long CommentCount { get; set; }
+
+        public string LatestComment { get; set; }
     }
 }

@@ -31,6 +31,17 @@ namespace CommentsDemo.Controllers
             return Ok(result);
         }
 
+
+        [HttpGet]
+        [Route("Overview")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public ActionResult<IEnumerable<ProductDTO>> GetOverview()
+        {
+            IEnumerable<ProductDTO> result = this.dataAccess.GetOverviewAsync().Result;
+
+            return Ok(result);
+        }
+
         // GET Product/<value>
         [HttpGet("{productName}")]
         [ProducesResponseType(StatusCodes.Status200OK)]

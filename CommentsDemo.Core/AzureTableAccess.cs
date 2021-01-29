@@ -123,6 +123,35 @@ namespace CommentsDemo.Core
             }
         }
 
+        public async Task<long> RetrieveCommentCountAsync(string tableName, string productName)
+        {
+            try
+            {
+                long result = 0;
+                TableContinuationToken continuationToken = null;
+                CloudTableClient tableClient = CreateTableClient(this.connectionString);
+                CloudTable table = tableClient.GetTableReference(tableName);
+
+                string wherePart = TableQuery.GenerateFilterCondition("PartitionKey", QueryComparisons.Equal, productName);
+                TableQuery tableQuery = new TableQuery { TakeCount = 1000 }.Where(wherePart).Select(new List<string> { "PartitionKey" });
+
+                do
+                {
+                    TableQuerySegment<DynamicTableEntity> segment = await table.ExecuteQuerySegmentedAsync(tableQuery, continuationToken).ConfigureAwait(false);
+                    result += segment.Results.Count;
+
+                    continuationToken = segment.ContinuationToken;
+                }
+                while (continuationToken != null);               
+
+                return result;
+            }
+            catch (StorageException e)
+            {
+                throw new CommentsDemoException($"Exception occured during {MethodBase.GetCurrentMethod().Name} call.", e);
+            }
+        }
+
         public async Task<string> RetrieveLatestCommentAsync(string tableName, string productName)
         {
             try
@@ -166,7 +195,7 @@ namespace CommentsDemo.Core
         private static string GetConnectionString()
         {
             string connectionString = configuration.GetConnectionString("DefaultConnectionStringForConsole");
-
+            
             if (string.IsNullOrWhiteSpace(connectionString))
             {
                 throw new CommentsDemoException($"Missing DefaultConnectionStringForConsole information!");

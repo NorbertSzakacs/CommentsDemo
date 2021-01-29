@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 using CommentsDemo.Common;
 using CommentsDemo.Core.AzureModel;
@@ -101,6 +102,24 @@ namespace CommentsDemo.Core
             }
 
             return InsertResultEnum.NotPermitted;
+        }
+
+        public async Task<IEnumerable<ProductDTO>> GetOverviewAsync()
+        {
+
+            IEnumerable<Task<ProductDTO>> perProductTasks = this.azureAccess.RetrieveProductListAsync(tableName).Result
+                .Select(name => GetOneProductOverviewAsync(name));
+
+            IEnumerable<ProductDTO> productOverviews = await Task.WhenAll(perProductTasks);
+            return productOverviews;
+        }
+
+        private async Task<ProductDTO> GetOneProductOverviewAsync(string productName)
+        {
+            string latest = await this.azureAccess.RetrieveLatestCommentAsync(tableName, productName);
+            long commentCount = await this.azureAccess.RetrieveCommentCountAsync(tableName, productName);
+
+             return new ProductDTO() { ProductName = productName, LatestComment = latest, CommentCount = commentCount };
         }
 
         private static CommentDTO CreateCommentDTO(string comment, string createdAt)

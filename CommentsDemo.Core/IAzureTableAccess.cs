@@ -18,7 +18,9 @@ namespace CommentsDemo.Core
 
         Task<string> RetrieveLatestCommentAsync(string tableName, string productName);
 
+        Task<long> RetrieveCommentCountAsync(string tableName, string productName);
+
         // Table scan
-        Task<IEnumerable<string>> RetrieveProductListAsync(string tableName);
+        Task<IEnumerable<string>> RetrieveProductListAsync(string tableName); 
     }
 }
